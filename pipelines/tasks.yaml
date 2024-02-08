@@ -1,0 +1,42 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: git-clone-task
+spec:
+  params:
+    - name: repo-url
+      type: string
+  workspaces:
+    - name: shared-data
+  steps:
+    - name: git-clone
+      image: alpine/git
+      workingDir: $(workspaces.shared-data.path)
+      script: |
+        echo ">>> Cloning $(params.repo-url) Repository"
+        mkdir source
+        git clone $(params.repo-url) source
+        ls source
+        echo ">>> Successfully Cloned Repository"
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: maven-unit-test-task
+spec:
+  params:
+    - name: source-path
+      type: string
+  workspaces:
+    - name: shared-data
+  steps:
+    - name: maven-unit-test
+      image: maven:3.8.4-jdk-11
+      workingDir: $(workspaces.shared-data.path)
+      script: |
+        echo ">>> Application Source Code:"
+        ls $(params.source-path)
+        echo ">>> Running Maven Unit-Tests"
+        cd $(params.source-path)
+        mvn test
+        echo ">>> Unit-Tests Run Finished"

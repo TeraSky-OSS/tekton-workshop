@@ -1,0 +1,33 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: git-clone-and-test-pipeline
+spec:
+  params:
+    - name: repo-url
+      type: string
+    - name: source-path
+      type: string
+      default: source
+  workspaces:
+    - name: shared-data
+  tasks:
+    - name: git-clone
+      taskRef:
+        name: git-clone-task
+      workspaces:
+        - name: shared-data
+          workspace: shared-data
+      params:
+        - name: repo-url
+          value: $(params.repo-url)
+    - name: maven-unit-test
+      taskRef:
+        name: maven-unit-test-task
+      runAfter: [ "git-clone" ]
+      workspaces:
+        - name: shared-data
+          workspace: shared-data
+      params:
+        - name: source-path
+          value: $(params.source-path)
